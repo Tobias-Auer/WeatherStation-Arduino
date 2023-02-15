@@ -57,8 +57,7 @@ OW_Weather ow;  // Weather forecast library instance
 
 void setup() {
   Serial.begin(115200);
-  int progressbarValue = 0;
-  int tasks = 4;
+  int tasks = 5;
 
   // ======================================================================================================================== //
   // ====+++++++++++++++++++++++++++++++++++++++++++++RESET CONNECTION++++++++++++++++++++++++++++++++++++++++++++++++++==== //
@@ -67,7 +66,7 @@ void setup() {
   Serial.write(0xFF);
   Serial.write(0xFF);
   Serial.write(0xFF);
-  Serial.print("progressBar.val=0"); 
+  Serial.print("progressBar.val=0");
   Serial.write(0xFF);
   Serial.write(0xFF);
   Serial.write(0xFF);
@@ -137,6 +136,47 @@ void setup() {
   // ======================================================================================================================== //
   // ====++++++++++++++++++++++++++++++++++++++++++++++++++++GET TIME+++++++++++++++++++++++++++++++++++++++++++++++++++==== //
   // ====================================================================================================================== //
+  Serial.print("t0.txt=\"Frage Werte vom Sensor ab...\"");
+  Serial.write(0xFF);
+  Serial.write(0xFF);
+  Serial.write(0xFF);
+
+  if (sender.begin(wifiClient, "https://worldtimeapi.org/api/timezone/Europe/Berlin")) {
+    // HTTP-Code der Response speichern
+    int httpCode = sender.GET();
+    if (httpCode > 0) {
+      if (httpCode == 200) {
+        const char *json = sender.getString().c_str();
+        DynamicJsonDocument doc(1024);
+        deserializeJson(doc, json);
+
+        const String time = doc["datetime"];
+
+        year = time.substring(0, 4);
+        month = time.substring(5, 7);
+        day = time.substring(8, 10);
+        hour = time.substring(11, 13);
+        minute = time.substring(14, 16);
+        second = time.substring(17, 19);
+
+        // TODO: sent time
+
+      } else {
+        // critical error
+        Serial.print("t0.txt=\"Synchronisiation fehlgeschalgen!\"");
+        Serial.write(0xFF);
+        Serial.write(0xFF);
+        Serial.write(0xFF);
+        delay(3);
+      }
+    } else {
+      time();  // sometimes the request fails --> restart
+    }
+  }
+  Serial.print("progressBar.val=" + String(100 / tasks * 4));
+  Serial.write(0xFF);
+  Serial.write(0xFF);
+  Serial.write(0xFF);
 
 
   // ========================================================================================================================== //
@@ -166,7 +206,7 @@ void setup() {
   // ====----------------------------------------GET VALUES FROM OPENWEATHERMAP END---------------------------------------==== //
   // ======================================================================================================================== //
 
-  Serial.print("progressBar.val=100");
+  Serial.print("progressBar.val=" + String(100 / tasks * 5));
   Serial.write(0xFF);
   Serial.write(0xFF);
   Serial.write(0xFF);
